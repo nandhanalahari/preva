@@ -42,7 +42,11 @@ export function Navbar({ className }: { className?: string }) {
                   Dashboard
                 </Button>
               </Link>
-              <Button variant="outline" size="sm" onClick={() => signOut()}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => signOut({ callbackUrl: "/", redirect: true })}
+              >
                 Sign Out
               </Button>
             </>

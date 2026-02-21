@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation"
 import { Users, AlertTriangle, Calendar, Activity } from "lucide-react"
 import { auth } from "@/lib/auth"
+
+export const runtime = "nodejs"
 import { AppHeader } from "@/components/app-header"
 import { StatCard } from "@/components/stat-card"
 import { PatientCard } from "@/components/patient-card"

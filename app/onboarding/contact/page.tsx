@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
+
+export const runtime = "nodejs"
 import { findUserById } from "@/lib/users"
 import { ContactForm } from "@/components/contact-form"
 import { Navbar } from "@/components/navbar"

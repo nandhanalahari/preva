@@ -44,7 +44,7 @@ export function SignInForm() {
         setError(role === "nurse" ? "Invalid email or password." : "Invalid username or password.")
         return
       }
-      router.push("/onboarding/contact")
+      router.push("/dashboard")
       router.refresh()
     } finally {
       setLoading(false)

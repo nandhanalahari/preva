@@ -2,6 +2,8 @@ import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Hospital, User, KeyRound } from "lucide-react"
 import { auth } from "@/lib/auth"
+
+export const runtime = "nodejs"
 import { AppHeader } from "@/components/app-header"
 import { Badge } from "@/components/ui/badge"
 import { RiskGauge } from "@/components/risk-gauge"
