@@ -74,15 +74,17 @@ export async function analyzeVisitNote(
     return { ok: false, error: "GEMINI_API_KEY is not set." }
   }
 
-  const prompt = `Analyze this clinical visit note and return a JSON object with:
-- newRiskScore: number 0-100 (readmission/decompensation risk from vitals, symptoms, adherence, acuity)
-- riskFactors: array of 3-6 items, each { "factor": string, "severity": "critical" or "high", "detail": string }, most important first
-- soapNote: { "subjective", "objective", "assessment", "plan" } - concise SOAP note
-- voiceSummary: 2-4 sentences in plain English for the patient (warm, jargon-free)
+  const prompt = `You are summarizing a nurse's clinical visit note. CRITICAL: Use ONLY information that is explicitly stated in the clinical note below. Do not infer, assume, or add any symptoms, conditions, medications, findings, or advice that are not written in the note. If the note is short, your output must stay short and only reflect what was said.
 
-Patient: ${patientName}. Current risk score: ${currentRiskScore}%.
+Return a JSON object with:
+- newRiskScore: number 0-100. Base this only on what the note says (e.g. "BP up" may justify a modest increase). Do not invent severity.
+- riskFactors: array of items that are EXPLICITLY mentioned in the note only. Each { "factor": string, "severity": "critical" or "high", "detail": string }. If the note mentions only one thing (e.g. blood pressure), list only that. Do not add factors from your own assumptions.
+- soapNote: { "subjective", "objective", "assessment", "plan" }. Restate only what is in the note in SOAP format. Keep it brief if the note is brief.
+- voiceSummary: A short, warm restatement in plain English of what the nurse actually said to the patient. This will be read or played to the patient. Say only what the note says—e.g. if the note says blood pressure is up and to come back next month, the voiceSummary should say exactly that in friendly language, and must NOT mention heart condition, swelling, medications, oxygen, or any other detail not in the note.
 
-Clinical note:
+Patient: ${patientName}. Current risk score on file: ${currentRiskScore}%.
+
+Clinical note (use only this):
 ${clinicalNote}`
 
   try {
@@ -93,6 +95,8 @@ ${clinicalNote}`
       config: {
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
+        systemInstruction:
+          "You summarize the nurse's clinical note only. Use exclusively what is written in the note. Do not add or assume any symptoms, conditions, medications, vitals, or advice. The voiceSummary must be a brief, friendly restatement of what the nurse said—never expand or invent.",
       },
     })
     const raw = response?.text?.trim()

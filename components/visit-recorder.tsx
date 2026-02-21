@@ -47,11 +47,13 @@ export function VisitRecorder({ patient }: { patient: Patient }) {
   const [voiceLoading, setVoiceLoading] = useState(false)
   const [playLoading, setPlayLoading] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [previousRiskScore, setPreviousRiskScore] = useState<number | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
 
   async function handleAnalyze() {
     setAnalyzeError(null)
+    setPreviousRiskScore(patient.riskScore)
     setState("analyzing")
     const result = await analyzeVisitNote(note, patient.name, patient.riskScore)
     if (result.ok) {
@@ -132,6 +134,7 @@ export function VisitRecorder({ patient }: { patient: Patient }) {
   const handleReset = () => {
     setState("idle")
     setAnalysis(null)
+    setPreviousRiskScore(null)
     setAnalyzeError(null)
     setNote(DEFAULT_NOTE)
     setShowSoapDetails(false)
@@ -230,20 +233,23 @@ export function VisitRecorder({ patient }: { patient: Patient }) {
         {/* Analysis results */}
         {state === "complete" && displayAnalysis && (
           <div className="flex flex-col gap-5 animate-in fade-in-0 duration-500">
-            {/* Alert banner */}
-            <div className="flex items-center gap-3 rounded-lg border border-risk-high/30 bg-risk-high/5 px-4 py-3">
-              <AlertTriangle className="size-5 shrink-0 text-risk-high" />
-              <div>
-                <p className="text-sm font-semibold text-risk-high">
-                  Care Coordinator Alert
-                </p>
-                <p className="text-xs text-foreground/80">
-                  {patient.name} flagged as Critical Risk. Care coordinator has been notified for immediate follow-up.
-                </p>
-              </div>
-            </div>
-
-            <Separator />
+            {/* Alert banner: only when new risk score is critical (>= 70%) */}
+            {displayAnalysis.newRiskScore >= 70 && (
+              <>
+                <div className="flex items-center gap-3 rounded-lg border border-risk-high/30 bg-risk-high/5 px-4 py-3">
+                  <AlertTriangle className="size-5 shrink-0 text-risk-high" />
+                  <div>
+                    <p className="text-sm font-semibold text-risk-high">
+                      Care Coordinator Alert
+                    </p>
+                    <p className="text-xs text-foreground/80">
+                      {patient.name} flagged as Critical Risk. Care coordinator has been notified for immediate follow-up.
+                    </p>
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
 
             {/* Risk score change */}
             <div className="flex flex-col items-center gap-2">
@@ -252,7 +258,7 @@ export function VisitRecorder({ patient }: { patient: Patient }) {
               </p>
               <RiskGauge score={displayAnalysis.newRiskScore} size={140} />
               <p className="text-xs text-muted-foreground">
-                Previous: {patient.riskScore}% → Now: {displayAnalysis.newRiskScore}%
+                Previous: {(previousRiskScore ?? patient.riskScore)}% → Now: {displayAnalysis.newRiskScore}%
               </p>
             </div>
 

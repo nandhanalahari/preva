@@ -36,8 +36,8 @@ export function MedicationList({ medications }: { medications: Medication[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {medications.map((med) => (
-              <TableRow key={med.name}>
+            {medications.map((med, index) => (
+              <TableRow key={`med-${index}`}>
                 <TableCell className="font-medium text-foreground">{med.name}</TableCell>
                 <TableCell className="text-muted-foreground">{med.dosage}</TableCell>
                 <TableCell className="hidden text-muted-foreground sm:table-cell">{med.frequency}</TableCell>
