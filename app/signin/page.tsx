@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 import { Navbar } from "@/components/navbar"
 import { SignInForm } from "@/components/signin-form"
 
@@ -6,6 +8,13 @@ export default async function SignInPage({
 }: {
   searchParams: Promise<{ role?: string }>
 }) {
+  const session = await auth()
+  if (session?.user?.id) {
+    const role = (session.user as { role?: string }).role
+    if (role === "patient") redirect("/patient-dashboard")
+    if (role === "nurse") redirect("/dashboard")
+  }
+
   const { role } = await searchParams
   const defaultRole = role === "patient" ? "patient" : "nurse"
   return (

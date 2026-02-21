@@ -1,11 +1,14 @@
+import { auth } from "@/lib/auth"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth()
+  const userRole = (session?.user as { role?: string } | undefined)?.role ?? null
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
       <Navbar />
-      <HeroSection />
+      <HeroSection userRole={userRole === "nurse" ? "nurse" : userRole === "patient" ? "patient" : null} />
     </div>
   )
 }

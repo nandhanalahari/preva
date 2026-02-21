@@ -21,7 +21,9 @@ import {
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
-export function HeroSection() {
+type HeroSectionProps = { userRole?: "nurse" | "patient" | null }
+
+export function HeroSection({ userRole = null }: HeroSectionProps) {
   return (
     <section className="relative flex min-h-screen flex-col overflow-hidden pt-16">
       <AnimatedBackground />
@@ -89,9 +91,9 @@ export function HeroSection() {
           </span>
         </div>
 
-        {/* CTAs - more prominent */}
+        {/* CTAs - when already signed in, go to dashboard; otherwise signin */}
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link href="/dashboard">
+          <Link href={userRole === "nurse" ? "/dashboard" : "/signin"}>
             <Button
               size="lg"
               className={cn(
@@ -99,11 +101,11 @@ export function HeroSection() {
                 "transition-all duration-200 hover:scale-[1.02] hover:bg-primary/90 hover:shadow-2xl hover:shadow-primary/25"
               )}
             >
-              I’m a Nurse
+              {userRole === "nurse" ? "Go to Dashboard" : "I'm a Nurse"}
               <ArrowRight className="h-5 w-5" />
             </Button>
           </Link>
-          <Link href="/signin?role=patient">
+          <Link href={userRole === "patient" ? "/patient-dashboard" : "/signin?role=patient"}>
             <Button
               variant="outline"
               size="lg"
@@ -112,7 +114,7 @@ export function HeroSection() {
                 "transition-all duration-200 hover:scale-[1.02] hover:border-primary hover:bg-primary/10 hover:text-primary"
               )}
             >
-              I’m a Patient
+              {userRole === "patient" ? "Go to Dashboard" : "I'm a Patient"}
               <Volume2 className="h-5 w-5" />
             </Button>
           </Link>
@@ -232,18 +234,20 @@ export function HeroSection() {
             Ready to get started?
           </h2>
           <p className="mb-8 text-muted-foreground">
-            Sign in as a nurse to open your dashboard, or as a patient to hear your care in your own words.
+            {userRole
+              ? "Go to your dashboard."
+              : "Sign in as a nurse to open your dashboard, or as a patient to hear your care in your own words."}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/dashboard">
+            <Link href={userRole === "nurse" ? "/dashboard" : "/signin"}>
               <Button size="lg" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                I’m a Nurse
+                {userRole === "nurse" ? "Go to Dashboard" : "I'm a Nurse"}
                 <ArrowRight className="size-4" />
               </Button>
             </Link>
-            <Link href="/signin?role=patient">
+            <Link href={userRole === "patient" ? "/patient-dashboard" : "/signin?role=patient"}>
               <Button variant="outline" size="lg" className="gap-2 border-primary/40 hover:bg-primary/10 hover:text-primary">
-                I’m a Patient
+                {userRole === "patient" ? "Go to Dashboard" : "I'm a Patient"}
                 <Volume2 className="size-4" />
               </Button>
             </Link>
