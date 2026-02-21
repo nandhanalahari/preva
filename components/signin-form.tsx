@@ -14,9 +14,9 @@ const glowClass = "shadow-[0_0_30px_rgba(185,28,28,0.25)] ring-2 ring-primary/30
 
 type Role = "nurse" | "patient"
 
-export function SignInForm() {
+export function SignInForm({ defaultRole = "nurse" }: { defaultRole?: Role }) {
   const router = useRouter()
-  const [role, setRole] = useState<Role>("nurse")
+  const [role, setRole] = useState<Role>(defaultRole)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
