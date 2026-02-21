@@ -1,43 +1,47 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Hospital } from "lucide-react"
+import { ArrowLeft, Hospital, User, KeyRound } from "lucide-react"
+import { auth } from "@/lib/auth"
 import { AppHeader } from "@/components/app-header"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { RiskGauge } from "@/components/risk-gauge"
 import { RiskTrendChart } from "@/components/risk-trend-chart"
 import { BPTrendChart } from "@/components/bp-trend-chart"
 import { MedicationList } from "@/components/medication-list"
 import { VisitHistory } from "@/components/visit-history"
 import { VisitRecorder } from "@/components/visit-recorder"
-import { getPatientDetail } from "@/lib/data"
+import { PatientContactInfo, PatientCredentials } from "@/components/patient-contact-credentials"
+import { getPatientDetail } from "@/lib/patients"
+import { getPatientUserByPatientId } from "@/lib/users"
 
 export default async function PatientDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
-  const detail = getPatientDetail(id)
+  const session = await auth()
+  if (!session?.user?.id) redirect("/signin")
+  if ((session.user as { role?: string }).role !== "nurse") redirect("/patient-dashboard")
 
+  const { id } = await params
+  const detail = await getPatientDetail(id)
   if (!detail) notFound()
 
+  const patientUser = await getPatientUserByPatientId(id)
   const { patient, riskHistory, bpHistory, medications, visits } = detail
 
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="mx-auto max-w-7xl px-6 py-8">
-        {/* Back link */}
         <Link
-          href="/"
+          href="/dashboard"
           className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
           Back to Dashboard
         </Link>
 
-        {/* Patient header */}
         <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
@@ -60,27 +64,39 @@ export default async function PatientDetailPage({
               </p>
             )}
           </div>
-
           <div className="flex flex-col items-center gap-4 sm:items-end">
             <RiskGauge score={patient.riskScore} />
-            {patient.id === "mary-thompson" && (
-              <VisitRecorder patient={patient} />
-            )}
+            <VisitRecorder patient={patient} />
           </div>
         </div>
 
-        {/* Charts grid */}
+        {/* Contact info & credentials */}
+        <div className="mb-8 grid gap-6 sm:grid-cols-2">
+          <div>
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+              <User className="size-4" />
+              Patient contact information
+            </h2>
+            <PatientContactInfo contactInfo={patientUser?.contactInfo} />
+          </div>
+          <div>
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+              <KeyRound className="size-4" />
+              Login credentials
+            </h2>
+            <PatientCredentials username={patientUser?.username} />
+          </div>
+        </div>
+
         <div className="mb-6 grid gap-6 lg:grid-cols-2">
           <RiskTrendChart data={riskHistory} />
           <BPTrendChart data={bpHistory} />
         </div>
 
-        {/* Medication Adherence */}
         <div className="mb-6">
           <MedicationList medications={medications} />
         </div>
 
-        {/* Visit History */}
         <div className="mb-6">
           <VisitHistory visits={visits} />
         </div>
