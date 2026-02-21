@@ -61,6 +61,10 @@ export interface PatientDoc {
   imageInitials: string
   /** Blood pressure history; when empty, UI may show placeholder trend */
   bpHistory?: BPReading[]
+  /** Latest visit voice summary for patient playback */
+  lastVoiceSummary?: string
+  /** ISO date when lastVoiceSummary was set */
+  lastVoiceSummaryAt?: string
   createdAt?: Date
   userId?: unknown
   addedByUserId?: unknown

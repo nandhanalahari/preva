@@ -51,6 +51,10 @@ export interface PatientDetail {
   bpHistory: BPHistoryPoint[]
   medications: Medication[]
   visits: Visit[]
+  /** Latest visit summary text (for patient to play) */
+  lastVoiceSummary?: string | null
+  /** Date of latest summary (ISO) */
+  lastVoiceSummaryAt?: string | null
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

@@ -12,7 +12,9 @@ import { BPTrendChart } from "@/components/bp-trend-chart"
 import { MedicationList } from "@/components/medication-list"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Phone, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { PlayVisitSummaryCard } from "@/components/play-visit-summary-card"
+import { DailySummaryCard } from "@/components/daily-summary-card"
+import { Phone, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { getRiskLabel } from "@/lib/data"
 
 export default async function PatientDashboardPage() {
@@ -48,7 +50,7 @@ export default async function PatientDashboardPage() {
     )
   }
 
-  const { patient, riskHistory, bpHistory, medications } = detail
+  const { patient, riskHistory, bpHistory, medications, lastVoiceSummary, lastVoiceSummaryAt } = detail
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,18 +61,14 @@ export default async function PatientDashboardPage() {
           Hello, {patient.name}. Here are your diagnostics and care team contact.
         </p>
 
-        {/* AI feature placeholder */}
-        <Card className="mb-8 border-primary/20 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="size-5 text-primary" />
-              AI summary
-            </CardTitle>
-            <CardDescription>
-              Your nurse can play or send you a voice summary after each visit. Ask them for the latest update.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="mb-8 grid gap-6 md:grid-cols-2">
+          <PlayVisitSummaryCard
+            patientId={patient.id}
+            lastVoiceSummaryAt={lastVoiceSummaryAt ?? null}
+            lastVoiceSummaryPreview={lastVoiceSummary ?? null}
+          />
+          <DailySummaryCard patientId={patient.id} />
+        </div>
 
         <div className="mb-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

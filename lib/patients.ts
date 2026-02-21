@@ -121,6 +121,8 @@ export async function getPatientDetail(id: string): Promise<PatientDetail | unde
           bpHistory,
           medications,
           visits: [],
+          lastVoiceSummary: doc.lastVoiceSummary ?? null,
+          lastVoiceSummaryAt: doc.lastVoiceSummaryAt ?? null,
         }
       }
     } catch {

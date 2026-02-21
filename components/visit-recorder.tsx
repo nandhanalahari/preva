@@ -29,6 +29,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { RiskGauge } from "@/components/risk-gauge"
 import { type Patient } from "@/lib/data"
 import { analyzeVisitNote, type VisitAnalysis } from "@/app/actions/analyze-visit-note"
+import { updatePatientFromAnalysis } from "@/app/actions/update-patient-from-analysis"
 import { synthesizeSpeech, transcribeAudio } from "@/app/actions/elevenlabs"
 
 type AnalysisState = "idle" | "analyzing" | "complete"
@@ -56,6 +57,10 @@ export function VisitRecorder({ patient }: { patient: Patient }) {
     if (result.ok) {
       setAnalysis(result.analysis)
       setState("complete")
+      // Persist risk score and voice summary to patient so dashboard shows current risk and patient can play summary
+      if (/^[a-f0-9]{24}$/i.test(patient.id)) {
+        await updatePatientFromAnalysis(patient.id, result.analysis)
+      }
     } else {
       setAnalyzeError(result.error)
       setState("idle")
