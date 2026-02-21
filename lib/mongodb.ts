@@ -39,6 +39,13 @@ export interface UserDoc {
   createdAt?: Date
 }
 
+/** Single blood pressure reading stored on the patient */
+export interface BPReading {
+  date: string // YYYY-MM-DD
+  systolic: number
+  diastolic: number
+}
+
 /** Patient document shape in MongoDB */
 export interface PatientDoc {
   _id?: unknown
@@ -52,6 +59,8 @@ export interface PatientDoc {
   lastVisitDate: string | null
   status: "active" | "discharged"
   imageInitials: string
+  /** Blood pressure history; when empty, UI may show placeholder trend */
+  bpHistory?: BPReading[]
   createdAt?: Date
   userId?: unknown
   addedByUserId?: unknown

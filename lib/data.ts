@@ -57,15 +57,21 @@ export interface PatientDetail {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-/** Format an ISO date string (YYYY-MM-DD) to "Mon DD" without locale-dependent APIs */
+/** Format an ISO date string (YYYY-MM-DD) to "Mon DD" without locale-dependent APIs. Returns "—" if empty or invalid. */
 export function formatDate(dateStr: string): string {
-  const [y, m, d] = dateStr.split("-").map(Number)
+  if (!dateStr || typeof dateStr !== "string") return "—"
+  const parts = dateStr.split("-").map(Number)
+  const [y, m, d] = parts
+  if (parts.length < 3 || !m || m < 1 || m > 12 || !d || d < 1) return "—"
   return `${MONTHS[m - 1]} ${d}`
 }
 
-/** Format an ISO date string to "Mon DD, YYYY" */
+/** Format an ISO date string to "Mon DD, YYYY". Returns "—" if empty or invalid. */
 export function formatDateLong(dateStr: string): string {
-  const [y, m, d] = dateStr.split("-").map(Number)
+  if (!dateStr || typeof dateStr !== "string") return "—"
+  const parts = dateStr.split("-").map(Number)
+  const [y, m, d] = parts
+  if (parts.length < 3 || !m || m < 1 || m > 12 || !d || d < 1) return "—"
   return `${MONTHS[m - 1]} ${d}, ${y}`
 }
 

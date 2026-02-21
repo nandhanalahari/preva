@@ -1,7 +1,38 @@
 import { ObjectId } from "mongodb"
 import { getDb, type PatientDoc } from "@/lib/mongodb"
 import { getPatientsSortedByRisk, getPatientDetail as getMockPatientDetail } from "@/lib/data"
-import type { Patient, PatientDetail, Medication } from "@/lib/data"
+import type { Patient, PatientDetail, Medication, RiskHistoryPoint, BPHistoryPoint } from "@/lib/data"
+
+function daysAgo(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  return d.toISOString().split("T")[0]
+}
+
+/** Placeholder risk history (e.g. when no visit data yet) so the chart isn't empty. Deterministic. */
+function placeholderRiskHistory(riskScore: number, count = 30): RiskHistoryPoint[] {
+  return Array.from({ length: count }, (_, i) => {
+    const t = i / (count - 1)
+    const variation = Math.round((Math.sin(i * 0.7) + Math.cos(i * 0.3)) * 3)
+    return {
+      date: daysAgo(count - 1 - i),
+      score: Math.max(0, Math.min(100, riskScore + variation)),
+    }
+  })
+}
+
+/** Placeholder BP history so the chart isn't empty. Deterministic. */
+function placeholderBPHistory(count = 30): BPHistoryPoint[] {
+  return Array.from({ length: count }, (_, i) => {
+    const variationS = Math.round((Math.sin(i * 0.5) * 6))
+    const variationD = Math.round((Math.cos(i * 0.4) * 4))
+    return {
+      date: daysAgo(count - 1 - i),
+      systolic: 122 + variationS,
+      diastolic: 78 + variationD,
+    }
+  })
+}
 
 const COLLECTION = "patients"
 
@@ -75,10 +106,19 @@ export async function getPatientDetail(id: string): Promise<PatientDetail | unde
           adherencePercent: 0,
           lastTaken: "",
         }))
+        const riskHistory = placeholderRiskHistory(patient.riskScore)
+        const bpHistory =
+          doc.bpHistory && doc.bpHistory.length > 0
+            ? doc.bpHistory.map((b) => ({
+                date: b.date,
+                systolic: b.systolic,
+                diastolic: b.diastolic,
+              }))
+            : placeholderBPHistory()
         return {
           patient,
-          riskHistory: [],
-          bpHistory: [],
+          riskHistory,
+          bpHistory,
           medications,
           visits: [],
         }

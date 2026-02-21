@@ -12,6 +12,7 @@ import { BPTrendChart } from "@/components/bp-trend-chart"
 import { MedicationList } from "@/components/medication-list"
 import { VisitHistory } from "@/components/visit-history"
 import { VisitRecorder } from "@/components/visit-recorder"
+import { RecordBloodPressure } from "@/components/record-blood-pressure"
 import { PatientContactInfo, PatientCredentials } from "@/components/patient-contact-credentials"
 import { getPatientDetail } from "@/lib/patients"
 import { getPatientUserByPatientId } from "@/lib/users"
@@ -92,7 +93,12 @@ export default async function PatientDetailPage({
 
         <div className="mb-6 grid gap-6 lg:grid-cols-2">
           <RiskTrendChart data={riskHistory} />
-          <BPTrendChart data={bpHistory} />
+          <div className="flex flex-col gap-3">
+            <BPTrendChart data={bpHistory} />
+            {/^[a-f0-9]{24}$/i.test(patient.id) && (
+              <RecordBloodPressure patientId={patient.id} />
+            )}
+          </div>
         </div>
 
         <div className="mb-6">

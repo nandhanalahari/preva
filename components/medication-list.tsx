@@ -42,18 +42,22 @@ export function MedicationList({ medications }: { medications: Medication[] }) {
                 <TableCell className="text-muted-foreground">{med.dosage}</TableCell>
                 <TableCell className="hidden text-muted-foreground sm:table-cell">{med.frequency}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Progress
-                      value={med.adherencePercent}
-                      className={`h-2 w-16 ${getProgressStyle(med.adherencePercent)}`}
-                    />
-                    <span className={`text-xs font-medium ${getAdherenceColor(med.adherencePercent)}`}>
-                      {med.adherencePercent}%
-                    </span>
-                  </div>
+                  {med.adherencePercent > 0 || med.lastTaken ? (
+                    <div className="flex items-center gap-2">
+                      <Progress
+                        value={med.adherencePercent}
+                        className={`h-2 w-16 ${getProgressStyle(med.adherencePercent)}`}
+                      />
+                      <span className={`text-xs font-medium ${getAdherenceColor(med.adherencePercent)}`}>
+                        {med.adherencePercent}%
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </TableCell>
                 <TableCell className="hidden text-muted-foreground md:table-cell">
-                  {formatDate(med.lastTaken)}
+                  {med.lastTaken ? formatDate(med.lastTaken) : "—"}
                 </TableCell>
               </TableRow>
             ))}
