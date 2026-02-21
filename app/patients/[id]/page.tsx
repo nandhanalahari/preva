@@ -1,11 +1,12 @@
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Hospital, User, KeyRound } from "lucide-react"
+import { ArrowLeft, Hospital, User, KeyRound, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { auth } from "@/lib/auth"
 
 export const runtime = "nodejs"
 import { AppHeader } from "@/components/app-header"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RiskGauge } from "@/components/risk-gauge"
 import { RiskTrendChart } from "@/components/risk-trend-chart"
 import { BPTrendChart } from "@/components/bp-trend-chart"
@@ -16,6 +17,7 @@ import { RecordBloodPressure } from "@/components/record-blood-pressure"
 import { PatientContactInfo, PatientCredentials } from "@/components/patient-contact-credentials"
 import { getPatientDetail } from "@/lib/patients"
 import { getPatientUserByPatientId } from "@/lib/users"
+import { getRiskLabel } from "@/lib/data"
 
 export default async function PatientDetailPage({
   params,
@@ -92,7 +94,43 @@ export default async function PatientDetailPage({
         </div>
 
         <div className="mb-6 grid gap-6 lg:grid-cols-2">
-          <RiskTrendChart data={riskHistory} />
+          <div className="flex flex-col gap-3">
+            <RiskTrendChart data={riskHistory} />
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-foreground">
+                  Risk at a glance
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center gap-3">
+                <span className="text-2xl font-semibold tabular-nums text-foreground">
+                  {patient.riskScore}%
+                </span>
+                <Badge
+                  variant="secondary"
+                  className={
+                    patient.riskTrend === "up"
+                      ? "border-risk-high/40 bg-risk-high/10 text-risk-high"
+                      : patient.riskTrend === "down"
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        : "text-muted-foreground"
+                  }
+                >
+                  {patient.riskTrend === "up" ? (
+                    <TrendingUp className="mr-1 size-3.5" />
+                  ) : patient.riskTrend === "down" ? (
+                    <TrendingDown className="mr-1 size-3.5" />
+                  ) : (
+                    <Minus className="mr-1 size-3.5" />
+                  )}
+                  {patient.riskTrend === "up" ? "Trending up" : patient.riskTrend === "down" ? "Trending down" : "Stable"}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {getRiskLabel(patient.riskScore)} · 30-day view
+                </span>
+              </CardContent>
+            </Card>
+          </div>
           <div className="flex flex-col gap-3">
             <BPTrendChart data={bpHistory} />
             {/^[a-f0-9]{24}$/i.test(patient.id) && (
