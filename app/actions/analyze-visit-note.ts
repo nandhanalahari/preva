@@ -1,7 +1,8 @@
 "use server"
 
 import { auth } from "@/lib/auth"
-import { GoogleGenAI } from "@google/genai"
+import { GoogleGenAI, Type } from "@google/genai"
+import type { Schema } from "@google/genai"
 
 export type RiskFactor = { factor: string; severity: "critical" | "high"; detail: string }
 export type VisitAnalysis = {
@@ -18,6 +19,47 @@ export type VisitAnalysis = {
 
 const MODEL = "gemini-2.5-flash"
 
+const RESPONSE_SCHEMA: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    newRiskScore: { type: Type.NUMBER, description: "Risk score 0-100" },
+    riskFactors: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          factor: { type: Type.STRING },
+          severity: { type: Type.STRING, enum: ["critical", "high"] },
+          detail: { type: Type.STRING },
+        },
+        required: ["factor", "severity", "detail"],
+      },
+    },
+    soapNote: {
+      type: Type.OBJECT,
+      properties: {
+        subjective: { type: Type.STRING },
+        objective: { type: Type.STRING },
+        assessment: { type: Type.STRING },
+        plan: { type: Type.STRING },
+      },
+      required: ["subjective", "objective", "assessment", "plan"],
+    },
+    voiceSummary: { type: Type.STRING },
+  },
+  required: ["newRiskScore", "riskFactors", "soapNote", "voiceSummary"],
+}
+
+function parseJsonSafe(raw: string): VisitAnalysis {
+  let jsonStr = raw.trim()
+  const codeMatch = jsonStr.match(/^```(?:json)?\s*([\s\S]*?)```\s*$/m)
+  if (codeMatch) jsonStr = codeMatch[1].trim()
+  // Fix trailing commas (invalid in JSON)
+  jsonStr = jsonStr.replace(/,(\s*[}\]])/g, "$1")
+  const parsed = JSON.parse(jsonStr) as VisitAnalysis
+  return parsed
+}
+
 export async function analyzeVisitNote(
   clinicalNote: string,
   patientName: string,
@@ -32,36 +74,38 @@ export async function analyzeVisitNote(
     return { ok: false, error: "GEMINI_API_KEY is not set." }
   }
 
-  const prompt = `You are a home health nurse assistant. Analyze this clinical visit note and return a single JSON object (no markdown, no code fence) with exactly these keys:
+  const prompt = `Analyze this clinical visit note and return a JSON object with:
+- newRiskScore: number 0-100 (readmission/decompensation risk from vitals, symptoms, adherence, acuity)
+- riskFactors: array of 3-6 items, each { "factor": string, "severity": "critical" or "high", "detail": string }, most important first
+- soapNote: { "subjective", "objective", "assessment", "plan" } - concise SOAP note
+- voiceSummary: 2-4 sentences in plain English for the patient (warm, jargon-free)
 
-- newRiskScore: number 0-100 (estimate readmission/decompensation risk based on the note; consider vitals, symptoms, adherence, and acuity)
-- riskFactors: array of { "factor": string, "severity": "critical" | "high", "detail": string } (3-6 items, most important first)
-- soapNote: { "subjective": string, "objective": string, "assessment": string, "plan": string } (concise SOAP note)
-- voiceSummary: string (2-4 sentences in plain English for the patient: what was found, what they should do, and any follow-up; warm and jargon-free)
-
-Patient: ${patientName}. Current risk score on file: ${currentRiskScore}%.
+Patient: ${patientName}. Current risk score: ${currentRiskScore}%.
 
 Clinical note:
-${clinicalNote}
-
-Return only the JSON object, no other text.`
+${clinicalNote}`
 
   try {
     const ai = new GoogleGenAI({ apiKey })
     const response = await ai.models.generateContent({
       model: MODEL,
       contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: RESPONSE_SCHEMA,
+      },
     })
     const raw = response?.text?.trim()
     if (!raw) {
       return { ok: false, error: "Empty response from model." }
     }
-    // Strip optional markdown code block
-    let jsonStr = raw
-    const codeMatch = raw.match(/^```(?:json)?\s*([\s\S]*?)```\s*$/m)
-    if (codeMatch) jsonStr = codeMatch[1].trim()
-    const parsed = JSON.parse(jsonStr) as VisitAnalysis
-    // Basic validation
+    let parsed: VisitAnalysis
+    try {
+      parsed = parseJsonSafe(raw)
+    } catch (parseErr) {
+      const msg = parseErr instanceof Error ? parseErr.message : "Invalid JSON"
+      return { ok: false, error: `Analysis response was invalid (${msg}). Please try again.` }
+    }
     if (typeof parsed.newRiskScore !== "number") parsed.newRiskScore = Math.min(100, Math.max(0, Number(parsed.newRiskScore) || 0))
     if (!Array.isArray(parsed.riskFactors)) parsed.riskFactors = []
     if (!parsed.soapNote || typeof parsed.soapNote !== "object") {

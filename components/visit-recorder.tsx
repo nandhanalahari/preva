@@ -78,17 +78,19 @@ export function VisitRecorder({ patient }: { patient: Patient }) {
       }
       recorder.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop())
+        setIsRecording(false)
+        setVoiceLoading(true)
         const blob = new Blob(chunksRef.current, { type: "audio/webm" })
         const form = new FormData()
         form.append("file", blob, "recording.webm")
         const res = await transcribeAudio(form)
         if (res.ok && res.text) setNote((prev) => (prev ? `${prev}\n${res.text}` : res.text))
         setVoiceLoading(false)
-        setIsRecording(false)
       }
       mediaRecorderRef.current = recorder
       recorder.start()
       setIsRecording(true)
+      setVoiceLoading(false) // re-enable button so "Stop recording" is clickable
     } catch (e) {
       setAnalyzeError("Microphone access needed for voice input.")
       setVoiceLoading(false)
