@@ -9,6 +9,11 @@ import { cn } from "@/lib/utils"
 export function Navbar({ className }: { className?: string }) {
   const { data: session, status } = useSession()
 
+  async function handleSignOut() {
+    await signOut({ redirect: false })
+    window.location.href = "/"
+  }
+
   return (
     <header
       className={cn(
@@ -42,11 +47,7 @@ export function Navbar({ className }: { className?: string }) {
                   Dashboard
                 </Button>
               </Link>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => signOut({ callbackUrl: "/", redirect: true })}
-              >
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
                 Sign Out
               </Button>
             </>
