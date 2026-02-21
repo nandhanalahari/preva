@@ -57,9 +57,11 @@ export function PlayVisitSummaryCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {lastVoiceSummaryPreview && (
-          <p className="rounded-md bg-muted/50 p-3 text-sm italic leading-relaxed text-muted-foreground line-clamp-3">
-            &ldquo;{lastVoiceSummaryPreview}&rdquo;
-          </p>
+          <div className="max-h-24 overflow-y-auto rounded-md bg-muted/50 p-3">
+            <p className="text-sm italic leading-relaxed text-muted-foreground">
+              &ldquo;{lastVoiceSummaryPreview}&rdquo;
+            </p>
+          </div>
         )}
         <Button
           variant="outline"
