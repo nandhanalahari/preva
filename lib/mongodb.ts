@@ -69,3 +69,14 @@ export interface PatientDoc {
   userId?: unknown
   addedByUserId?: unknown
 }
+
+/** Appointment document for nurse scheduling */
+export interface AppointmentDoc {
+  _id?: unknown
+  patientId: unknown // ObjectId
+  addedByUserId: unknown // ObjectId (nurse)
+  start: Date
+  end: Date
+  title?: string
+  createdAt?: Date
+}

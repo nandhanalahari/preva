@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
-import { Activity } from "lucide-react"
+import { Activity, CalendarDays } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -47,6 +47,14 @@ export function Navbar({ className }: { className?: string }) {
                   Dashboard
                 </Button>
               </Link>
+              {(session.user as { role?: string }).role === "nurse" && (
+                <Link href="/calendar">
+                  <Button variant="ghost" size="sm" className="gap-1.5">
+                    <CalendarDays className="size-4" />
+                    Calendar
+                  </Button>
+                </Link>
+              )}
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 Sign Out
               </Button>

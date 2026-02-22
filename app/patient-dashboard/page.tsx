@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { PlayVisitSummaryCard } from "@/components/play-visit-summary-card"
 import { DailySummaryCard } from "@/components/daily-summary-card"
+import { MyAppointments } from "@/components/my-appointments"
 import { Phone, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { getRiskLabel } from "@/lib/data"
 
@@ -68,6 +69,10 @@ export default async function PatientDashboardPage() {
             lastVoiceSummaryPreview={lastVoiceSummary ?? null}
           />
           <DailySummaryCard patientId={patient.id} />
+        </div>
+
+        <div className="mb-8">
+          <MyAppointments />
         </div>
 
         <div className="mb-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
