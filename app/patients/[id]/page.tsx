@@ -13,6 +13,7 @@ import { BPTrendChart } from "@/components/bp-trend-chart"
 import { MedicationList } from "@/components/medication-list"
 import { VisitHistory } from "@/components/visit-history"
 import { VisitRecorder } from "@/components/visit-recorder"
+import { PatientMessagesList } from "@/components/patient-messages-list"
 import { RecordBloodPressure } from "@/components/record-blood-pressure"
 import { PatientContactInfo, PatientCredentials } from "@/components/patient-contact-credentials"
 import { getPatientDetail } from "@/lib/patients"
@@ -141,6 +142,10 @@ export default async function PatientDetailPage({
 
         <div className="mb-6">
           <MedicationList medications={medications} />
+        </div>
+
+        <div className="mb-6">
+          <PatientMessagesList patientId={patient.id} />
         </div>
 
         <div className="mb-6">

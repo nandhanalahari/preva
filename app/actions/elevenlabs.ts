@@ -63,7 +63,7 @@ export async function transcribeAudio(
   formData: FormData
 ): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
   const session = await auth()
-  if (!session?.user?.id || (session.user as { role?: string }).role !== "nurse") {
+  if (!session?.user?.id) {
     return { ok: false, error: "Unauthorized." }
   }
   const apiKey = getApiKey()

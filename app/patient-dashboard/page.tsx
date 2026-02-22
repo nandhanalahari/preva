@@ -17,6 +17,7 @@ import { DailySummaryCard } from "@/components/daily-summary-card"
 import { MyAppointments } from "@/components/my-appointments"
 import { Phone, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { getRiskLabel } from "@/lib/data"
+import { PatientVoiceRecorder } from "@/components/patient-voice-recorder"
 
 export default async function PatientDashboardPage() {
   const session = await auth()
@@ -69,6 +70,10 @@ export default async function PatientDashboardPage() {
             lastVoiceSummaryPreview={lastVoiceSummary ?? null}
           />
           <DailySummaryCard patientId={patient.id} />
+        </div>
+
+        <div className="mb-8">
+          <PatientVoiceRecorder />
         </div>
 
         <div className="mb-8">

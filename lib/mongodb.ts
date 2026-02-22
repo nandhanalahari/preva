@@ -85,6 +85,18 @@ export interface VisitDoc {
   createdAt: Date
 }
 
+/** Patient-submitted voice message */
+export interface PatientMessageDoc {
+  _id?: unknown
+  patientId: unknown // ObjectId
+  type: "raw" | "analyzed"
+  transcript: string
+  symptoms?: string[]
+  aiSummary?: string
+  read: boolean
+  createdAt: Date
+}
+
 /** Appointment document for nurse scheduling */
 export interface AppointmentDoc {
   _id?: unknown
