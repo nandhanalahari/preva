@@ -66,7 +66,7 @@ Preva bridges the gap between nurse visits with AI-powered risk monitoring, real
 | **UI** | Tailwind CSS, shadcn/ui (50+ Radix components), Lucide icons |
 | **Charts** | Recharts (risk trends, blood pressure) |
 | **Calendar** | react-big-calendar with drag-and-drop |
-| **Deployment** | Vercel |
+| **Deployment** | Any Node.js hosting (Vercel, Railway, etc.) |
 
 ---
 
