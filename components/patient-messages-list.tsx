@@ -9,12 +9,19 @@ import {
   ChevronDown,
   ChevronUp,
   Circle,
+  Reply,
+  CheckCheck,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { Spinner } from "@/components/ui/spinner"
-import { fetchPatientMessages, markMessagesRead } from "@/app/actions/patient-messages"
+import {
+  fetchPatientMessages,
+  markMessagesRead,
+  replyToPatientMessage,
+} from "@/app/actions/patient-messages"
 
 type Message = {
   id: string
@@ -22,12 +29,44 @@ type Message = {
   transcript: string
   symptoms?: string[]
   aiSummary?: string
+  nurseReply?: string
+  nurseReplyAt?: string
   read: boolean
   createdAt: string
 }
 
-function MessageCard({ msg }: { msg: Message }) {
+function MessageCard({
+  msg,
+  isNurse,
+  onReplied,
+}: {
+  msg: Message
+  isNurse: boolean
+  onReplied: () => void
+}) {
   const [expanded, setExpanded] = useState(false)
+  const [replyOpen, setReplyOpen] = useState(false)
+  const [replyText, setReplyText] = useState("")
+  const [replying, setReplying] = useState(false)
+  const [replyError, setReplyError] = useState<string | null>(null)
+
+  const hasDetails =
+    msg.type === "analyzed" && (msg.aiSummary || (msg.symptoms?.length ?? 0) > 0)
+
+  async function handleReply() {
+    if (!replyText.trim()) return
+    setReplying(true)
+    setReplyError(null)
+    const res = await replyToPatientMessage(msg.id, replyText)
+    setReplying(false)
+    if (res.ok) {
+      setReplyOpen(false)
+      setReplyText("")
+      onReplied()
+    } else {
+      setReplyError(res.error)
+    }
+  }
 
   return (
     <div
@@ -66,17 +105,19 @@ function MessageCard({ msg }: { msg: Message }) {
             </p>
           </div>
         </div>
-        {msg.type === "analyzed" && (msg.aiSummary || msg.symptoms?.length) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 shrink-0 gap-1 text-xs"
-            onClick={() => setExpanded(!expanded)}
-          >
-            {expanded ? "Less" : "Details"}
-            {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-          </Button>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {hasDetails && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 text-xs"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? "Less" : "Details"}
+              {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+            </Button>
+          )}
+        </div>
       </div>
 
       {expanded && msg.type === "analyzed" && (
@@ -107,11 +148,97 @@ function MessageCard({ msg }: { msg: Message }) {
           )}
         </div>
       )}
+
+      {/* Nurse reply display */}
+      {msg.nurseReply && (
+        <div className="mt-3 border-t pt-3">
+          <div className="flex items-start gap-2 rounded-md bg-emerald-500/5 border border-emerald-500/20 p-3">
+            <CheckCheck className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  Nurse Reply
+                </span>
+                {msg.nurseReplyAt && (
+                  <span className="text-[11px] text-muted-foreground">
+                    {format(new Date(msg.nurseReplyAt), "MMM d 'at' h:mm a")}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm leading-relaxed text-foreground">{msg.nurseReply}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Nurse reply form */}
+      {isNurse && !msg.nurseReply && (
+        <div className="mt-3 border-t pt-3">
+          {!replyOpen ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={() => setReplyOpen(true)}
+            >
+              <Reply className="size-3.5" />
+              Reply
+            </Button>
+          ) : (
+            <div className="flex flex-col gap-2 animate-in fade-in-0 duration-200">
+              <Textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Write your reply to the patient..."
+                className="min-h-20 resize-none text-sm"
+                disabled={replying}
+                autoFocus
+              />
+              {replyError && (
+                <p className="text-xs text-destructive">{replyError}</p>
+              )}
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={replying || !replyText.trim()}
+                  onClick={handleReply}
+                >
+                  {replying ? (
+                    <Spinner className="size-3.5" />
+                  ) : (
+                    <Send className="size-3.5" />
+                  )}
+                  Send reply
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={replying}
+                  onClick={() => {
+                    setReplyOpen(false)
+                    setReplyText("")
+                    setReplyError(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
-export function PatientMessagesList({ patientId }: { patientId: string }) {
+export function PatientMessagesList({
+  patientId,
+  isNurse = true,
+}: {
+  patientId: string
+  isNurse?: boolean
+}) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -120,16 +247,18 @@ export function PatientMessagesList({ patientId }: { patientId: string }) {
       const data = await fetchPatientMessages(patientId)
       setMessages(data)
 
-      const hasUnread = data.some((m) => !m.read)
-      if (hasUnread) {
-        await markMessagesRead(patientId)
+      if (isNurse) {
+        const hasUnread = data.some((m) => !m.read)
+        if (hasUnread) {
+          await markMessagesRead(patientId)
+        }
       }
     } catch {
       // silent
     } finally {
       setLoading(false)
     }
-  }, [patientId])
+  }, [patientId, isNurse])
 
   useEffect(() => {
     load()
@@ -143,7 +272,7 @@ export function PatientMessagesList({ patientId }: { patientId: string }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <MessageSquare className="size-5 text-primary" />
-            Patient Messages
+            {isNurse ? "Patient Messages" : "Your Messages"}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center py-8">
@@ -160,24 +289,30 @@ export function PatientMessagesList({ patientId }: { patientId: string }) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
           <MessageSquare className="size-5 text-primary" />
-          Patient Messages
-          {unreadCount > 0 && (
+          {isNurse ? "Patient Messages" : "Your Messages"}
+          {isNurse && unreadCount > 0 && (
             <Badge className="ml-1 bg-primary text-primary-foreground">
               {unreadCount} new
             </Badge>
           )}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Voice messages recorded by the patient about their condition.
+          {isNurse
+            ? "Voice messages recorded by the patient about their condition."
+            : "Your voice messages and nurse replies."}
         </p>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {messages.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            No messages from this patient yet.
+            {isNurse
+              ? "No messages from this patient yet."
+              : "You haven\u2019t sent any messages yet. Use the recorder above to report your condition."}
           </p>
         ) : (
-          messages.map((msg) => <MessageCard key={msg.id} msg={msg} />)
+          messages.map((msg) => (
+            <MessageCard key={msg.id} msg={msg} isNurse={isNurse} onReplied={load} />
+          ))
         )}
       </CardContent>
     </Card>

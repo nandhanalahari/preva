@@ -93,6 +93,8 @@ export interface PatientMessageDoc {
   transcript: string
   symptoms?: string[]
   aiSummary?: string
+  nurseReply?: string
+  nurseReplyAt?: Date
   read: boolean
   createdAt: Date
 }

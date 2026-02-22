@@ -20,6 +20,8 @@ import { getRiskLabel } from "@/lib/data"
 import { PatientVoiceRecorder } from "@/components/patient-voice-recorder"
 import { EditableContactInfo } from "@/components/editable-contact-info"
 import { RiskReasoning } from "@/components/risk-reasoning"
+import { VisitHistory } from "@/components/visit-history"
+import { PatientMessagesList } from "@/components/patient-messages-list"
 
 export default async function PatientDashboardPage() {
   const session = await auth()
@@ -53,7 +55,7 @@ export default async function PatientDashboardPage() {
     )
   }
 
-  const { patient, riskHistory, bpHistory, medications, lastVoiceSummary, lastVoiceSummaryAt } = detail
+  const { patient, riskHistory, bpHistory, medications, visits, lastVoiceSummary, lastVoiceSummaryAt } = detail
 
   return (
     <div className="min-h-screen bg-background">
@@ -124,6 +126,10 @@ export default async function PatientDashboardPage() {
         </div>
 
         <div className="mb-8">
+          <PatientMessagesList patientId={patient.id} isNurse={false} />
+        </div>
+
+        <div className="mb-8">
           <MyAppointments />
         </div>
 
@@ -135,6 +141,10 @@ export default async function PatientDashboardPage() {
         <div className="mb-8">
           <h2 className="mb-4 text-lg font-semibold text-foreground">Your medications</h2>
           <MedicationList medications={medications} />
+        </div>
+
+        <div className="mb-8">
+          <VisitHistory visits={visits} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">

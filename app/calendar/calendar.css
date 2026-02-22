@@ -195,26 +195,105 @@
   border-radius: var(--rbc-bubble);
   overflow: hidden;
   background: hsl(var(--card));
+  border: 1px solid var(--rbc-grid-faint) !important;
 }
+
 .rbc-calendar-custom .rbc-agenda-view table.rbc-agenda-table {
   border: none;
+  border-collapse: separate;
+  border-spacing: 0;
 }
-.rbc-calendar-custom .rbc-agenda-view th {
+
+/* Header row */
+.rbc-calendar-custom .rbc-agenda-view table.rbc-agenda-table thead > tr > th {
   border: none !important;
+  background: hsl(var(--muted) / 0.35);
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  color: hsl(var(--muted-foreground));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--rbc-grid-strong) !important;
 }
-.rbc-calendar-custom .rbc-agenda-view .rbc-agenda-date-cell,
+
+/* Date column */
+.rbc-calendar-custom .rbc-agenda-view .rbc-agenda-date-cell {
+  padding: 14px 16px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  border: none !important;
+  vertical-align: top;
+  white-space: nowrap;
+  width: 1%;
+}
+
+/* Time column */
 .rbc-calendar-custom .rbc-agenda-view .rbc-agenda-time-cell {
-  padding: 12px 16px;
-  font-size: 0.875rem;
+  padding: 14px 16px;
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: hsl(var(--muted-foreground));
   border: none !important;
+  vertical-align: top;
+  white-space: nowrap;
+  width: 1%;
 }
+.rbc-calendar-custom .rbc-agenda-view .rbc-agenda-time-cell .rbc-agenda-time-cell-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Event column */
 .rbc-calendar-custom .rbc-agenda-view .rbc-agenda-event-cell {
-  padding: 12px 16px;
+  padding: 14px 16px;
   border: none !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+/* Row styling */
+.rbc-calendar-custom .rbc-agenda-view tbody > tr {
+  transition: background 0.15s ease;
+}
+.rbc-calendar-custom .rbc-agenda-view tbody > tr:hover {
+  background: hsl(var(--primary) / 0.04);
 }
 .rbc-calendar-custom .rbc-agenda-view tbody > tr + tr {
-  border-top: 1px solid hsl(var(--border) / 0.5);
+  border-top: 1px solid hsl(var(--border) / 0.3);
+}
+
+/* Event chip inside agenda */
+.rbc-calendar-custom .rbc-agenda-view .rbc-event {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary) / 0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  box-shadow: none;
+  transform: none;
+}
+.rbc-calendar-custom .rbc-agenda-view .rbc-event:hover {
+  background: hsl(var(--primary) / 0.15);
+  box-shadow: none;
+  transform: none;
+}
+
+/* Empty state */
+.rbc-calendar-custom .rbc-agenda-empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
 }
 
 /* ── DnD add-on: keep clean ──────────────────────────────── */

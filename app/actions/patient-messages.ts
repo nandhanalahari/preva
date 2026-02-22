@@ -107,6 +107,8 @@ export async function fetchPatientMessages(
     transcript: string
     symptoms?: string[]
     aiSummary?: string
+    nurseReply?: string
+    nurseReplyAt?: string
     read: boolean
     createdAt: string
   }[]
@@ -140,9 +142,36 @@ export async function fetchPatientMessages(
     transcript: d.transcript,
     symptoms: d.symptoms,
     aiSummary: d.aiSummary,
+    nurseReply: d.nurseReply,
+    nurseReplyAt: d.nurseReplyAt ? d.nurseReplyAt.toISOString() : undefined,
     read: d.read,
     createdAt: (d.createdAt ?? new Date()).toISOString(),
   }))
+}
+
+export async function replyToPatientMessage(
+  messageId: string,
+  reply: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { ok: false, error: "Unauthorized." }
+  if ((session.user as { role?: string }).role !== "nurse") {
+    return { ok: false, error: "Only nurses can reply." }
+  }
+  const text = reply.trim()
+  if (!text) return { ok: false, error: "Reply cannot be empty." }
+  if (!ObjectId.isValid(messageId)) return { ok: false, error: "Invalid message." }
+
+  const db = await getDb()
+  const result = await db.collection("patientMessages").updateOne(
+    { _id: new ObjectId(messageId) },
+    { $set: { nurseReply: text, nurseReplyAt: new Date() } }
+  )
+  if (result.matchedCount === 0) return { ok: false, error: "Message not found." }
+
+  revalidatePath("/patients/[id]", "page")
+  revalidatePath("/patient-dashboard", "page")
+  return { ok: true }
 }
 
 export async function markMessagesRead(
