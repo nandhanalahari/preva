@@ -19,6 +19,7 @@ import { Phone, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { getRiskLabel } from "@/lib/data"
 import { PatientVoiceRecorder } from "@/components/patient-voice-recorder"
 import { EditableContactInfo } from "@/components/editable-contact-info"
+import { RiskReasoning } from "@/components/risk-reasoning"
 
 export default async function PatientDashboardPage() {
   const session = await auth()
@@ -124,6 +125,9 @@ export default async function PatientDashboardPage() {
                 <span className="text-xs text-muted-foreground">
                   {getRiskLabel(patient.riskScore)} · 30-day view
                 </span>
+                <div className="w-full">
+                  <RiskReasoning patientId={patient.id} />
+                </div>
               </CardContent>
             </Card>
           </div>

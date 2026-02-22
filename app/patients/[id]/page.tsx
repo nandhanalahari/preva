@@ -16,6 +16,7 @@ import { VisitRecorder } from "@/components/visit-recorder"
 import { PatientMessagesList } from "@/components/patient-messages-list"
 import { RecordBloodPressure } from "@/components/record-blood-pressure"
 import { PatientContactInfo, PatientCredentials } from "@/components/patient-contact-credentials"
+import { RiskReasoning } from "@/components/risk-reasoning"
 import { getPatientDetail } from "@/lib/patients"
 import { getPatientUserByPatientId } from "@/lib/users"
 import { getRiskLabel } from "@/lib/data"
@@ -129,6 +130,9 @@ export default async function PatientDetailPage({
                 <span className="text-xs text-muted-foreground">
                   {getRiskLabel(patient.riskScore)} · 30-day view
                 </span>
+                <div className="w-full">
+                  <RiskReasoning patientId={patient.id} />
+                </div>
               </CardContent>
             </Card>
           </div>

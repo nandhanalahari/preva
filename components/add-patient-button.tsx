@@ -128,7 +128,7 @@ export function AddPatientButton({ className }: { className?: string }) {
             handleSubmit(new FormData(e.currentTarget as HTMLFormElement))
           }}
         >
-          <div className="flex-1 overflow-y-auto pr-1">
+          <div className="flex-1 overflow-y-auto px-1">
             <div className="flex flex-col gap-4 pb-2">
               {error && (
                 <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
