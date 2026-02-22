@@ -21,7 +21,7 @@ export default async function DashboardPage() {
     findUserById(nurseUserId),
   ])
   const sorted = [...patients].sort((a, b) => b.riskScore - a.riskScore)
-  const highRisk = patients.filter((p) => p.riskScore >= 40).length
+  const highRisk = patients.filter((p) => p.riskScore >= 50).length
   const avgRisk =
     patients.length > 0
       ? Math.round(patients.reduce((s, p) => s + p.riskScore, 0) / patients.length)
@@ -34,7 +34,7 @@ export default async function DashboardPage() {
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
-              Patient Dashboard
+              Welcome back{nurseUser?.name ? `, ${nurseUser.name}` : ""}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Your active caseload, sorted by risk priority

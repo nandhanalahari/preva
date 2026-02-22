@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
-import { Activity, CalendarDays } from "lucide-react"
+import { Activity, CalendarDays, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -45,6 +45,12 @@ export function Navbar({ className }: { className?: string }) {
               >
                 <Button variant="ghost" size="sm">
                   Dashboard
+                </Button>
+              </Link>
+              <Link href="/messages">
+                <Button variant="ghost" size="sm" className="gap-1.5">
+                  <MessageSquare className="size-4" />
+                  Messages
                 </Button>
               </Link>
               <Link href="/calendar">

@@ -97,6 +97,17 @@ export interface PatientMessageDoc {
   createdAt: Date
 }
 
+/** In-app chat message between nurse and patient */
+export interface ChatMessageDoc {
+  _id?: unknown
+  patientId: unknown // ObjectId — conversation is grouped by patient
+  senderId: unknown // ObjectId — the user who sent it
+  senderRole: "nurse" | "patient"
+  text: string
+  read: boolean
+  createdAt: Date
+}
+
 /** Appointment document for nurse scheduling */
 export interface AppointmentDoc {
   _id?: unknown
