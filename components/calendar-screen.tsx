@@ -211,14 +211,29 @@ export function CalendarScreen({ patients, readOnly = false }: { patients: Patie
 
   const handleEventDrop = useCallback(
     async ({ event, start, end }: { event: CalendarEvent; start: Date; end: Date }) => {
+      const newStart = start instanceof Date ? start : new Date(start)
+      const newEnd = end instanceof Date ? end : new Date(end)
+
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === event.id ? { ...e, start: newStart, end: newEnd } : e
+        )
+      )
+
       const result = await updateAppointmentAction(
         event.id,
-        (start instanceof Date ? start : new Date(start)).toISOString(),
-        (end instanceof Date ? end : new Date(end)).toISOString()
+        newStart.toISOString(),
+        newEnd.toISOString()
       )
-      if (result.ok) await reload()
+      if (!result.ok) {
+        setEvents((prev) =>
+          prev.map((e) =>
+            e.id === event.id ? { ...e, start: event.start, end: event.end } : e
+          )
+        )
+      }
     },
-    [reload]
+    []
   )
 
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
