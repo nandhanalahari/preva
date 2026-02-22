@@ -47,14 +47,12 @@ export function Navbar({ className }: { className?: string }) {
                   Dashboard
                 </Button>
               </Link>
-              {(session.user as { role?: string }).role === "nurse" && (
-                <Link href="/calendar">
-                  <Button variant="ghost" size="sm" className="gap-1.5">
-                    <CalendarDays className="size-4" />
-                    Calendar
-                  </Button>
-                </Link>
-              )}
+              <Link href="/calendar">
+                <Button variant="ghost" size="sm" className="gap-1.5">
+                  <CalendarDays className="size-4" />
+                  Calendar
+                </Button>
+              </Link>
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 Sign Out
               </Button>

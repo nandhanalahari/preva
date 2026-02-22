@@ -9,19 +9,28 @@ import {
   deleteAppointment as deleteAppointmentDb,
 } from "@/lib/appointments"
 
-export async function fetchAppointments(start: Date, end: Date, patientId?: string) {
+function toSafeDate(v: unknown): Date {
+  if (v instanceof Date && !isNaN(v.getTime())) return v
+  const d = new Date(typeof v === "string" || typeof v === "number" ? v : String(v))
+  return isNaN(d.getTime()) ? new Date() : d
+}
+
+export async function fetchAppointments(
+  start: Date | string | number,
+  end: Date | string | number,
+  patientId?: string
+) {
   const session = await auth()
   if (!session?.user?.id) return []
   const role = (session.user as { role?: string }).role
-  const startDate = start instanceof Date ? start : new Date(start)
-  const endDate = end instanceof Date ? end : new Date(end)
-  const range = { start: startDate, end: endDate }
+  const range = { start: toSafeDate(start), end: toSafeDate(end) }
+
   if (role === "nurse") {
     return getAppointments(range, { nurseUserId: session.user.id })
   }
   if (role === "patient" && patientId) {
     const userPatientId = (session.user as { patientId?: string }).patientId
-    if (userPatientId !== patientId) return []
+    if (userPatientId && userPatientId !== patientId) return []
     return getAppointments(range, { patientId })
   }
   if (role === "patient") {
@@ -54,14 +63,16 @@ export async function createAppointmentAction(
 
 export async function updateAppointmentAction(
   appointmentId: string,
-  start: Date,
-  end: Date
+  start: Date | string,
+  end: Date | string
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await auth()
   if (!session?.user?.id || (session.user as { role?: string }).role !== "nurse") {
     return { ok: false, error: "Unauthorized." }
   }
-  const result = await updateAppointmentDb(appointmentId, start, end)
+  const startDate = toSafeDate(start)
+  const endDate = toSafeDate(end)
+  const result = await updateAppointmentDb(appointmentId, startDate, endDate)
   if (result.ok) {
     revalidatePath("/calendar")
     revalidatePath("/patient-dashboard")

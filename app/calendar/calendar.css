@@ -1,34 +1,15 @@
-/* Calendar: clean, non-spreadsheet design – no Excel vibes */
+/* Calendar: clean design with subtle grid lines for alignment */
 
 .rbc-calendar-custom {
-  --rbc-bubble: 14px;
+  --rbc-bubble: 10px;
   --rbc-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
   --rbc-soft-hover: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --rbc-grid-strong: hsl(var(--border) / 0.30);
+  --rbc-grid-faint: hsl(var(--border) / 0.14);
+  --rbc-grid-col: hsl(var(--border) / 0.18);
 }
 
-/* Kill all grid lines – no borders anywhere */
-.rbc-calendar-custom .rbc-header,
-.rbc-calendar-custom .rbc-header + .rbc-header,
-.rbc-calendar-custom .rbc-time-view,
-.rbc-calendar-custom .rbc-time-view .rbc-time-header-content,
-.rbc-calendar-custom .rbc-time-view .rbc-day-bg + .rbc-day-bg,
-.rbc-calendar-custom .rbc-time-gutter,
-.rbc-calendar-custom .rbc-day-slot .rbc-time-slot,
-.rbc-calendar-custom .rbc-month-view,
-.rbc-calendar-custom .rbc-month-row,
-.rbc-calendar-custom .rbc-month-row + .rbc-month-row,
-.rbc-calendar-custom .rbc-date-cell,
-.rbc-calendar-custom .rbc-row-bg,
-.rbc-calendar-custom .rbc-row-segment,
-.rbc-calendar-custom .rbc-agenda-view table,
-.rbc-calendar-custom .rbc-agenda-view th,
-.rbc-calendar-custom .rbc-agenda-view td,
-.rbc-calendar-custom .rbc-addons-dnd .rbc-addons-dnd-row,
-.rbc-calendar-custom .rbc-addons-dnd .rbc-addons-dnd-drag-preview {
-  border: none !important;
-}
-
-/* Toolbar: pill-style, minimal */
+/* ── Toolbar ─────────────────────────────────────────────── */
 .rbc-calendar-custom .rbc-toolbar {
   flex-wrap: wrap;
   gap: 10px;
@@ -52,26 +33,87 @@
   color: hsl(var(--primary-foreground));
 }
 
-/* Headers: no borders, light weight */
+/* ── Column headers ──────────────────────────────────────── */
 .rbc-calendar-custom .rbc-header {
-  padding: 14px 8px;
+  padding: 10px 8px;
   font-weight: 600;
   font-size: 0.8125rem;
   color: hsl(var(--muted-foreground));
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--rbc-grid-strong) !important;
+}
+.rbc-calendar-custom .rbc-header + .rbc-header {
+  border-left: 1px solid var(--rbc-grid-col) !important;
 }
 
-/* Events: red pill bubbles, readable text */
+/* ── Time view container ─────────────────────────────────── */
+.rbc-calendar-custom .rbc-time-view {
+  border-radius: var(--rbc-bubble);
+  overflow: hidden;
+  background: hsl(var(--muted) / 0.08);
+  border: 1px solid var(--rbc-grid-faint) !important;
+}
+.rbc-calendar-custom .rbc-time-header {
+  border-bottom: 1px solid var(--rbc-grid-strong) !important;
+}
+.rbc-calendar-custom .rbc-time-header-content {
+  border-left: 1px solid var(--rbc-grid-col) !important;
+}
+.rbc-calendar-custom .rbc-time-content {
+  border-top: none !important;
+}
+
+/* ── Time gutter labels ──────────────────────────────────── */
+.rbc-calendar-custom .rbc-time-gutter {
+  border: none !important;
+}
+.rbc-calendar-custom .rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: 1px solid var(--rbc-grid-strong) !important;
+  position: relative;
+}
+.rbc-calendar-custom .rbc-time-gutter .rbc-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground) / 0.7);
+  padding: 0 8px;
+  position: relative;
+  top: -0.7em;
+}
+
+/* ── Timeslot groups (hour rows) ─────────────────────────── */
+.rbc-calendar-custom .rbc-timeslot-group {
+  min-height: 48px;
+  border-bottom: 1px solid var(--rbc-grid-strong) !important;
+}
+
+/* Half-hour sub-lines inside each group */
+.rbc-calendar-custom .rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid var(--rbc-grid-faint) !important;
+}
+.rbc-calendar-custom .rbc-day-slot .rbc-time-slot:first-child {
+  border-top: none !important;
+}
+
+/* ── Day column separators (vertical lines) ──────────────── */
+.rbc-calendar-custom .rbc-day-slot {
+  border-left: 1px solid var(--rbc-grid-col) !important;
+}
+.rbc-calendar-custom .rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid var(--rbc-grid-col) !important;
+}
+
+/* ── Events ──────────────────────────────────────────────── */
 .rbc-calendar-custom .rbc-event {
   background: var(--primary);
   color: var(--primary-foreground);
   border: none;
-  padding: 8px 12px;
-  border-radius: var(--rbc-bubble);
+  padding: 2px 8px;
+  border-radius: 6px;
   box-shadow: var(--rbc-soft);
   font-weight: 500;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
 }
 .rbc-calendar-custom .rbc-event:hover {
   box-shadow: var(--rbc-soft-hover);
@@ -81,76 +123,63 @@
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+.rbc-calendar-custom .rbc-event-label {
+  font-size: 0.6875rem;
+  opacity: 0.85;
+}
 .rbc-calendar-custom .rbc-event-content {
-  white-space: normal;
-  word-break: break-word;
-  overflow: visible;
-}
-
-/* Time view: borderless, soft backgrounds only */
-.rbc-calendar-custom .rbc-time-view {
-  border-radius: var(--rbc-bubble);
+  white-space: nowrap;
   overflow: hidden;
-  background: hsl(var(--muted) / 0.2);
-}
-.rbc-calendar-custom .rbc-time-view .rbc-time-header-content,
-.rbc-calendar-custom .rbc-time-view .rbc-day-bg + .rbc-day-bg {
-  border: none;
-}
-.rbc-calendar-custom .rbc-day-slot .rbc-time-slot {
-  min-height: 40px;
-  border-top: 1px solid transparent !important;
-  border-color: transparent !important;
-}
-.rbc-calendar-custom .rbc-time-gutter .rbc-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: hsl(var(--muted-foreground) / 0.8);
+  text-overflow: ellipsis;
 }
 
-/* Today: subtle tint, no borders */
+/* ── Today highlight ─────────────────────────────────────── */
 .rbc-calendar-custom .rbc-today {
-  background: linear-gradient(
-    135deg,
-    hsl(var(--primary) / 0.08) 0%,
-    hsl(var(--primary) / 0.03) 100%
-  );
+  background: hsl(var(--primary) / 0.06);
 }
 .rbc-calendar-custom .rbc-off-range-bg {
-  background: hsl(var(--muted) / 0.25);
+  background: hsl(var(--muted) / 0.18);
 }
 
-/* Month view: calendar feel, not spreadsheet */
+/* ── Month view ──────────────────────────────────────────── */
 .rbc-calendar-custom .rbc-month-view {
   border-radius: var(--rbc-bubble);
   overflow: hidden;
   background: hsl(var(--card));
+  border: 1px solid var(--rbc-grid-faint) !important;
 }
 .rbc-calendar-custom .rbc-month-row {
-  border: none;
-  min-height: 100px;
+  border-bottom: 1px solid var(--rbc-grid-faint) !important;
+  min-height: 90px;
+}
+.rbc-calendar-custom .rbc-month-row + .rbc-month-row {
+  border-top: none !important;
+}
+.rbc-calendar-custom .rbc-row-bg .rbc-day-bg {
+  border-right: 1px solid var(--rbc-grid-faint) !important;
+}
+.rbc-calendar-custom .rbc-row-bg .rbc-day-bg:last-child {
+  border-right: none !important;
 }
 .rbc-calendar-custom .rbc-date-cell {
-  padding: 10px 12px;
-  font-size: 0.9375rem;
+  padding: 8px 10px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: hsl(var(--foreground));
+  border: none !important;
 }
 .rbc-calendar-custom .rbc-date-cell.rbc-now {
   font-weight: 700;
   color: hsl(var(--primary));
 }
 .rbc-calendar-custom .rbc-date-cell.rbc-off-range {
-  color: hsl(var(--muted-foreground) / 0.6);
-}
-.rbc-calendar-custom .rbc-row-bg .rbc-day-bg {
-  border: none !important;
+  color: hsl(var(--muted-foreground) / 0.5);
 }
 .rbc-calendar-custom .rbc-row-segment {
-  border: none;
+  border: none !important;
 }
 
-/* Current time line */
+/* ── Current time indicator ──────────────────────────────── */
 .rbc-calendar-custom .rbc-current-time-indicator {
   background: linear-gradient(
     90deg,
@@ -161,7 +190,7 @@
   opacity: 0.9;
 }
 
-/* Agenda view: list, not table */
+/* ── Agenda view ─────────────────────────────────────────── */
 .rbc-calendar-custom .rbc-agenda-view {
   border-radius: var(--rbc-bubble);
   overflow: hidden;
@@ -169,6 +198,9 @@
 }
 .rbc-calendar-custom .rbc-agenda-view table.rbc-agenda-table {
   border: none;
+}
+.rbc-calendar-custom .rbc-agenda-view th {
+  border: none !important;
 }
 .rbc-calendar-custom .rbc-agenda-view .rbc-agenda-date-cell,
 .rbc-calendar-custom .rbc-agenda-view .rbc-agenda-time-cell {
@@ -185,18 +217,16 @@
   border-top: 1px solid hsl(var(--border) / 0.5);
 }
 
-/* Force-override base lib borders */
-.rbc-calendar-custom .rbc-day-bg,
-.rbc-calendar-custom .rbc-day-bg + .rbc-day-bg,
-.rbc-calendar-custom .rbc-time-content,
-.rbc-calendar-custom .rbc-timeslot-group,
-.rbc-calendar-custom .rbc-day-slot,
-.rbc-calendar-custom .rbc-time-header,
-.rbc-calendar-custom .rbc-time-header-content .rbc-header,
-.rbc-calendar-custom .rbc-time-header-content .rbc-header + .rbc-header,
-.rbc-calendar-custom .rbc-row-content .rbc-row,
-.rbc-calendar-custom .rbc-row-content .rbc-row-segment,
-.rbc-calendar-custom .rbc-row-segment + .rbc-row-segment,
+/* ── DnD add-on: keep clean ──────────────────────────────── */
+.rbc-calendar-custom .rbc-addons-dnd .rbc-addons-dnd-row,
+.rbc-calendar-custom .rbc-addons-dnd .rbc-addons-dnd-drag-preview {
+  border: none !important;
+}
+
+/* ── Misc overrides ──────────────────────────────────────── */
 .rbc-calendar-custom .rbc-show-more {
   border: none !important;
+  color: hsl(var(--primary));
+  font-size: 0.75rem;
+  font-weight: 600;
 }

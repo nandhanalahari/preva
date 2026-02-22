@@ -50,25 +50,38 @@ const localizer = dateFnsLocalizer({
 
 const DnDCalendar = withDragAndDrop(Calendar)
 
+function toDate(v: unknown): Date {
+  if (v instanceof Date && !isNaN(v.getTime())) return v
+  const d = new Date(typeof v === "string" || typeof v === "number" ? v : String(v))
+  return isNaN(d.getTime()) ? new Date() : d
+}
+
+function toCalendarEvent(a: Appointment): CalendarEvent {
+  return {
+    id: a.id,
+    title: a.patientName ?? a.title,
+    start: toDate(a.start),
+    end: toDate(a.end),
+    resource: { patientId: a.patientId },
+  }
+}
+
 function CustomToolbar({ label, onNavigate, onView, view, views }: ToolbarProps) {
-  const goPrev = () => onNavigate("PREV")
-  const goNext = () => onNavigate("NEXT")
-  const goToday = () => onNavigate("TODAY")
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={goPrev} className="h-8 w-8">
+        <Button variant="outline" size="icon" onClick={() => onNavigate("PREV")} className="h-8 w-8">
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="font-display text-lg font-semibold text-foreground min-w-[200px] text-center">
           {label}
         </span>
-        <Button variant="outline" size="icon" onClick={goNext} className="h-8 w-8">
+        <Button variant="outline" size="icon" onClick={() => onNavigate("NEXT")} className="h-8 w-8">
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={goToday}>
+        <Button variant="ghost" size="sm" onClick={() => onNavigate("TODAY")}>
           Today
         </Button>
         {views && (Array.isArray(views) ? views.length : Object.keys(views).length) > 1 && (
@@ -103,7 +116,7 @@ type CalendarEvent = {
 
 type PatientOption = { id: string; name: string }
 
-export function CalendarScreen({ patients }: { patients: PatientOption[] }) {
+export function CalendarScreen({ patients, readOnly = false }: { patients: PatientOption[]; readOnly?: boolean }) {
   const [date, setDate] = useState<Date>(() => new Date())
   const [view, setView] = useState<"month" | "week" | "day" | "agenda">("week")
   const [events, setEvents] = useState<CalendarEvent[]>([])
@@ -118,28 +131,29 @@ export function CalendarScreen({ patients }: { patients: PatientOption[] }) {
   const [deleteEvent, setDeleteEvent] = useState<CalendarEvent | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
-  const toDate = (v: unknown): Date => {
-    if (v instanceof Date && !isNaN(v.getTime())) return v
-    const d = new Date(typeof v === "string" ? v : String(v))
-    return isNaN(d.getTime()) ? new Date() : d
-  }
-  const loadAppointments = useCallback(async (start: Date, end: Date) => {
+  // Single fetch — always widens to cover today → 90 days for the upcoming section
+  const loadEvents = useCallback(async (viewStart: Date, viewEnd: Date) => {
     setLoading(true)
     try {
-      const list = await fetchAppointments(start, end)
-      setEvents(
-        list.map((a: Appointment) => ({
-          id: a.id,
-          title: a.patientName ?? a.title,
-          start: toDate(a.start),
-          end: toDate(a.end),
-          resource: { patientId: a.patientId },
-        }))
-      )
+      const now = new Date()
+      const today = startOfDay(now)
+      const future90 = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)
+      const fetchStart = viewStart < today ? viewStart : today
+      const fetchEnd = viewEnd > future90 ? viewEnd : future90
+      const list = await fetchAppointments(fetchStart.toISOString(), fetchEnd.toISOString())
+      setEvents(list.map(toCalendarEvent))
+    } catch {
+      // keep whatever events we had
     } finally {
       setLoading(false)
     }
   }, [])
+
+  const upcoming = useMemo(() => {
+    return [...events]
+      .sort((a, b) => a.start.getTime() - b.start.getTime())
+      .slice(0, 20)
+  }, [events])
 
   const handleRangeChange = useCallback(
     (rangeOrDates: { start: Date; end: Date } | Date[] | undefined, _view?: string) => {
@@ -154,13 +168,10 @@ export function CalendarScreen({ patients }: { patients: PatientOption[] }) {
         end = rangeOrDates.end
       }
       if (!start || !end) return
-      const now = new Date()
-      const minEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
-      const extendedEnd = end < minEnd ? minEnd : end
       setRange({ start, end })
-      loadAppointments(start, extendedEnd)
+      loadEvents(start, end)
     },
-    [loadAppointments]
+    [loadEvents]
   )
 
   const handleSelectSlot = useCallback((slot: { start: Date; end: Date }) => {
@@ -170,6 +181,12 @@ export function CalendarScreen({ patients }: { patients: PatientOption[] }) {
     setCreateError(null)
     setCreateOpen(true)
   }, [])
+
+  const reload = useCallback(() => {
+    const s = range?.start ?? startOfWeek(date, { locale: enUS })
+    const e = range?.end ?? endOfWeek(date, { locale: enUS })
+    return loadEvents(s, e)
+  }, [range, date, loadEvents])
 
   const handleCreateSubmit = useCallback(async () => {
     if (!selectedPatientId || !slotStart || !slotEnd) return
@@ -183,38 +200,25 @@ export function CalendarScreen({ patients }: { patients: PatientOption[] }) {
       )
       if (result.ok) {
         setCreateOpen(false)
-        if (range) {
-          const now = new Date()
-          const minEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
-          const extendedEnd = range.end < minEnd ? minEnd : range.end
-          loadAppointments(range.start, extendedEnd)
-        } else {
-          const start = startOfWeek(date, { locale: enUS })
-          const end = endOfWeek(date, { locale: enUS })
-          const now = new Date()
-          const minEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
-          const extendedEnd = end < minEnd ? minEnd : end
-          loadAppointments(start, extendedEnd)
-        }
+        await reload()
       } else {
         setCreateError(result.error ?? "Failed to create")
       }
     } finally {
       setCreateLoading(false)
     }
-  }, [selectedPatientId, slotStart, slotEnd, range, date, loadAppointments])
+  }, [selectedPatientId, slotStart, slotEnd, reload])
 
   const handleEventDrop = useCallback(
     async ({ event, start, end }: { event: CalendarEvent; start: Date; end: Date }) => {
-      const result = await updateAppointmentAction(event.id, start, end)
-      if (result.ok && range) {
-        const now = new Date()
-        const minEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
-        const extendedEnd = range.end < minEnd ? minEnd : range.end
-        loadAppointments(range.start, extendedEnd)
-      }
+      const result = await updateAppointmentAction(
+        event.id,
+        (start instanceof Date ? start : new Date(start)).toISOString(),
+        (end instanceof Date ? end : new Date(end)).toISOString()
+      )
+      if (result.ok) await reload()
     },
-    [range, loadAppointments]
+    [reload]
   )
 
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
@@ -228,50 +232,20 @@ export function CalendarScreen({ patients }: { patients: PatientOption[] }) {
       const result = await deleteAppointmentAction(deleteEvent.id)
       if (result.ok) {
         setDeleteEvent(null)
-        if (range) {
-          const now = new Date()
-          const minEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
-          const extendedEnd = range.end < minEnd ? minEnd : range.end
-          loadAppointments(range.start, extendedEnd)
-        } else {
-          const start = startOfWeek(date, { locale: enUS })
-          const end = endOfWeek(date, { locale: enUS })
-          const now = new Date()
-          const minEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
-          const extendedEnd = end < minEnd ? minEnd : end
-          loadAppointments(start, extendedEnd)
-        }
+        await reload()
       }
     } finally {
       setDeleteLoading(false)
     }
-  }, [deleteEvent, range, date, loadAppointments])
+  }, [deleteEvent, reload])
 
   useEffect(() => {
     const now = new Date()
     const start = startOfWeek(now, { locale: enUS })
     const end = endOfWeek(now, { locale: enUS })
-    const minEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
-    const extendedEnd = end < minEnd ? minEnd : end
     setRange({ start, end })
-    loadAppointments(start, extendedEnd)
-  }, [loadAppointments])
-
-  const upcomingAppointments = useMemo(() => {
-    const now = new Date()
-    const fromToday = startOfDay(now)
-    return events
-      .filter((e) => {
-        const start = e.start instanceof Date ? e.start : new Date(String(e.start))
-        return !isNaN(start.getTime()) && start >= fromToday
-      })
-      .sort((a, b) => {
-        const sa = a.start instanceof Date ? a.start : new Date(String(a.start))
-        const sb = b.start instanceof Date ? b.start : new Date(String(b.start))
-        return sa.getTime() - sb.getTime()
-      })
-      .slice(0, 14)
-  }, [events])
+    loadEvents(start, end)
+  }, [loadEvents])
 
   return (
     <div className="flex flex-col gap-6">
@@ -281,12 +255,14 @@ export function CalendarScreen({ patients }: { patients: PatientOption[] }) {
           Schedule
         </h1>
         <p className="text-sm text-muted-foreground">
-          Drag to reschedule. Click an empty slot to add. Click an event to delete.
+          {readOnly
+            ? "View your scheduled appointments."
+            : "Drag to reschedule. Click an empty slot to add. Click an event to delete."}
         </p>
       </div>
 
       <div className="rounded-xl border border-border bg-card p-4">
-        <div className="h-[calc(100vh-20rem)] min-h-[420px]">
+        <div className="h-[calc(100vh-16rem)] min-h-[620px]">
           {loading && events.length === 0 ? (
             <div className="flex h-full items-center justify-center text-muted-foreground">Loading calendar…</div>
           ) : (
@@ -301,11 +277,12 @@ export function CalendarScreen({ patients }: { patients: PatientOption[] }) {
               onNavigate={(newDate) => setDate(newDate)}
               onView={(newView) => setView(newView)}
               onRangeChange={handleRangeChange}
-              onSelectSlot={handleSelectSlot}
-              onSelectEvent={handleSelectEvent}
-              onEventDrop={handleEventDrop}
+              onSelectSlot={readOnly ? undefined : handleSelectSlot}
+              onSelectEvent={readOnly ? undefined : handleSelectEvent}
+              onEventDrop={readOnly ? undefined : handleEventDrop}
               resizable={false}
-              selectable
+              selectable={!readOnly}
+              draggableAccessor={() => !readOnly}
               popup
               components={{ toolbar: CustomToolbar }}
               views={["month", "week", "day", "agenda"]}
@@ -319,26 +296,27 @@ export function CalendarScreen({ patients }: { patients: PatientOption[] }) {
 
       <div className="rounded-xl border border-border bg-card p-4">
         <h2 className="font-display text-lg font-semibold text-foreground mb-3">Upcoming</h2>
-        {upcomingAppointments.length === 0 ? (
+        {upcoming.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No upcoming appointments. Click an empty slot in the calendar to add one.
+            {readOnly
+              ? "No upcoming appointments."
+              : "No upcoming appointments. Click an empty slot in the calendar to add one."}
           </p>
         ) : (
           <ul className="space-y-2">
-            {upcomingAppointments.map((evt) => {
-              const start = evt.start instanceof Date ? evt.start : new Date(String(evt.start))
-              return (
-                <li
-                  key={evt.id}
-                  className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary px-3 py-2.5 text-sm text-primary-foreground"
-                >
-                  <span className="shrink-0 text-xs font-semibold opacity-95">
-                    {format(start, "EEE, MMM d")}
-                  </span>
-                  <span className="shrink-0 text-xs opacity-95">
-                    {format(start, "h:mm a")}
-                  </span>
-                  <span className="min-w-0 flex-1 break-words font-medium">{evt.title}</span>
+            {upcoming.map((evt) => (
+              <li
+                key={evt.id}
+                className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary px-3 py-2.5 text-sm text-primary-foreground"
+              >
+                <span className="shrink-0 text-xs font-semibold opacity-95">
+                  {format(evt.start, "EEE, MMM d")}
+                </span>
+                <span className="shrink-0 text-xs opacity-95">
+                  {format(evt.start, "h:mm a")}
+                </span>
+                <span className="min-w-0 flex-1 break-words font-medium">{evt.title}</span>
+                {!readOnly && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -348,81 +326,85 @@ export function CalendarScreen({ patients }: { patients: PatientOption[] }) {
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
-                </li>
-              )
-            })}
+                )}
+              </li>
+            ))}
           </ul>
         )}
       </div>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>New appointment</DialogTitle>
-            <DialogDescription>
-              {slotStart && slotEnd
-                ? `Schedule a visit: ${format(slotStart, "EEE, MMM d, h:mm a")} – ${format(slotEnd, "h:mm a")}`
-                : "Choose a patient and time."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Patient</Label>
-              <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select patient" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {!readOnly && (
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>New appointment</DialogTitle>
+              <DialogDescription>
+                {slotStart && slotEnd
+                  ? `Schedule a visit: ${format(slotStart, "EEE, MMM d, h:mm a")} – ${format(slotEnd, "h:mm a")}`
+                  : "Choose a patient and time."}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label>Patient</Label>
+                <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select patient" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {patients.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-          {createError && <p className="text-sm text-destructive">{createError}</p>}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={createLoading}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateSubmit} disabled={!selectedPatientId || createLoading}>
-              {createLoading ? "Creating…" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            {createError && <p className="text-sm text-destructive">{createError}</p>}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={createLoading}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateSubmit} disabled={!selectedPatientId || createLoading}>
+                {createLoading ? "Creating…" : "Create"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
-      <AlertDialog open={!!deleteEvent} onOpenChange={(open) => !open && setDeleteEvent(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete appointment</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteEvent && (
-                <>
-                  Delete &quot;{deleteEvent.title}&quot; on{" "}
-                  {format(deleteEvent.start instanceof Date ? deleteEvent.start : new Date(deleteEvent.start), "EEE, MMM d, h:mm a")}
-                  ? This cannot be undone.
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault()
-                handleDeleteConfirm()
-              }}
-              disabled={deleteLoading}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteLoading ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {!readOnly && (
+        <AlertDialog open={!!deleteEvent} onOpenChange={(open) => !open && setDeleteEvent(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete appointment</AlertDialogTitle>
+              <AlertDialogDescription>
+                {deleteEvent && (
+                  <>
+                    Delete &quot;{deleteEvent.title}&quot; on{" "}
+                    {format(deleteEvent.start, "EEE, MMM d, h:mm a")}
+                    ? This cannot be undone.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleDeleteConfirm()
+                }}
+                disabled={deleteLoading}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleteLoading ? "Deleting…" : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   )
 }
