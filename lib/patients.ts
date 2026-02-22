@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb"
-import { getDb, type PatientDoc } from "@/lib/mongodb"
+import { getDb, type PatientDoc, type VisitDoc } from "@/lib/mongodb"
 import { getPatientsSortedByRisk, getPatientDetail as getMockPatientDetail } from "@/lib/data"
-import type { Patient, PatientDetail, Medication, RiskHistoryPoint, BPHistoryPoint } from "@/lib/data"
+import type { Patient, PatientDetail, Medication, RiskHistoryPoint, BPHistoryPoint, Visit } from "@/lib/data"
 
 function daysAgo(n: number): string {
   const d = new Date()
@@ -115,12 +115,33 @@ export async function getPatientDetail(id: string): Promise<PatientDetail | unde
                 diastolic: b.diastolic,
               }))
             : placeholderBPHistory()
+        const visitDocs = await db
+          .collection<VisitDoc>("visits")
+          .find({ patientId: new ObjectId(id) })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .toArray()
+
+        const visits: Visit[] = visitDocs.map((v) => ({
+          id: (v._id as ObjectId).toString(),
+          patientId: (v.patientId as ObjectId).toString(),
+          date: v.date,
+          nurseNote: v.clinicalNote ?? "",
+          vitalsBP: "",
+          symptoms: [],
+          riskScoreBefore: v.riskScoreBefore,
+          riskScoreAfter: v.riskScoreAfter,
+          soapNote: v.soapNote,
+          riskFactors: v.riskFactors,
+          voiceSummary: v.voiceSummary,
+        }))
+
         return {
           patient,
           riskHistory,
           bpHistory,
           medications,
-          visits: [],
+          visits,
           lastVoiceSummary: doc.lastVoiceSummary ?? null,
           lastVoiceSummaryAt: doc.lastVoiceSummaryAt ?? null,
         }

@@ -24,6 +24,9 @@ export interface Visit {
   symptoms: string[]
   riskScoreBefore: number
   riskScoreAfter: number
+  soapNote?: { subjective: string; objective: string; assessment: string; plan: string }
+  riskFactors?: { factor: string; severity: "critical" | "high"; detail: string }[]
+  voiceSummary?: string
 }
 
 export interface RiskHistoryPoint {

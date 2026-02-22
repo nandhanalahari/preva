@@ -59,9 +59,8 @@ export function VisitRecorder({ patient }: { patient: Patient }) {
     if (result.ok) {
       setAnalysis(result.analysis)
       setState("complete")
-      // Persist risk score and voice summary to patient so dashboard shows current risk and patient can play summary
       if (/^[a-f0-9]{24}$/i.test(patient.id)) {
-        await updatePatientFromAnalysis(patient.id, result.analysis)
+        await updatePatientFromAnalysis(patient.id, result.analysis, note)
       }
     } else {
       setAnalyzeError(result.error)

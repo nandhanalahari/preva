@@ -70,6 +70,21 @@ export interface PatientDoc {
   addedByUserId?: unknown
 }
 
+/** Visit record saved after each analysis */
+export interface VisitDoc {
+  _id?: unknown
+  patientId: unknown // ObjectId
+  nurseUserId: unknown // ObjectId
+  date: string // YYYY-MM-DD
+  clinicalNote: string
+  riskScoreBefore: number
+  riskScoreAfter: number
+  riskFactors: { factor: string; severity: "critical" | "high"; detail: string }[]
+  soapNote: { subjective: string; objective: string; assessment: string; plan: string }
+  voiceSummary: string
+  createdAt: Date
+}
+
 /** Appointment document for nurse scheduling */
 export interface AppointmentDoc {
   _id?: unknown
