@@ -7,14 +7,19 @@ import { AppHeader } from "@/components/app-header"
 import { StatCard } from "@/components/stat-card"
 import { PatientCard } from "@/components/patient-card"
 import { AddPatientButton } from "@/components/add-patient-button"
+import { EditableContactInfo } from "@/components/editable-contact-info"
 import { getDashboardPatients } from "@/lib/patients"
+import { findUserById } from "@/lib/users"
 
 export default async function DashboardPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/signin")
   if ((session.user as { role?: string }).role !== "nurse") redirect("/patient-dashboard")
   const nurseUserId = session.user.id
-  const { patients } = await getDashboardPatients(nurseUserId)
+  const [{ patients }, nurseUser] = await Promise.all([
+    getDashboardPatients(nurseUserId),
+    findUserById(nurseUserId),
+  ])
   const sorted = [...patients].sort((a, b) => b.riskScore - a.riskScore)
   const highRisk = patients.filter((p) => p.riskScore >= 40).length
   const avgRisk =
@@ -62,6 +67,14 @@ export default async function DashboardPage() {
               <PatientCard key={patient.id} patient={patient} />
             ))
           )}
+        </div>
+
+        <div className="mt-8">
+          <EditableContactInfo
+            initialContactInfo={nurseUser?.contactInfo}
+            title="Your contact information"
+            description="This is shared with your patients so they can reach you."
+          />
         </div>
       </main>
     </div>

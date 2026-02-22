@@ -18,6 +18,7 @@ import { MyAppointments } from "@/components/my-appointments"
 import { Phone, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { getRiskLabel } from "@/lib/data"
 import { PatientVoiceRecorder } from "@/components/patient-voice-recorder"
+import { EditableContactInfo } from "@/components/editable-contact-info"
 
 export default async function PatientDashboardPage() {
   const session = await auth()
@@ -134,20 +135,27 @@ export default async function PatientDashboardPage() {
           <MedicationList medications={medications} />
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Phone className="size-5" />
-              Your nurse’s contact information
-            </CardTitle>
-            <CardDescription>
-              Use this to reach your care team between visits.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PatientContactInfo contactInfo={nurseContact ?? undefined} />
-          </CardContent>
-        </Card>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <EditableContactInfo
+            initialContactInfo={user.contactInfo}
+            title="Your contact information"
+            description="Keep this up to date so your nurse can reach you."
+          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="size-5" />
+                Your nurse&apos;s contact information
+              </CardTitle>
+              <CardDescription>
+                Use this to reach your care team between visits.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PatientContactInfo contactInfo={nurseContact ?? undefined} />
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   )
